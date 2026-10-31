@@ -1,0 +1,49 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>REVZZ LOGIN</title><style>*{box-sizing:border-box;margin:0;padding:0;font-family:Arial}body{background:#080000;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}.login-card{background:#120505;border:1px solid #dc262633;border-radius:20px;padding:28px 24px;width:100%;max-width:380px}.title{text-align:center;letter-spacing:4px;font-size:22px;font-weight:900;margin-bottom:24px}.title span{color:#ef4444}.label{font-size:11px;letter-spacing:2px;color:#ffffff59;font-weight:800;margin:18px 0 8px 4px}.input-wrap{position:relative}.input{width:100%;background:#000;border:1px solid #dc262633;border-radius:14px;padding:15px 44px 15px 16px;color:#fff;outline:none}.eye{position:absolute;right:14px;top:50%;transform:translateY(-50%);cursor:pointer;color:#ffffff66}.btn-login{width:100%;background:#ef4444;border:none;border-radius:14px;padding:15px;font-weight:900;letter-spacing:2px;margin-top:22px;color:#fff;cursor:pointer}.owner-text{text-align:center;font-size:10px;color:#ffffff47;margin-top:16px;font-weight:700}.alert{background:rgba(220,38,38,.15);border:1px solid rgba(220,38,38,.3);color:#ef4444;padding:12px;border-radius:12px;font-size:12px;font-weight:700;margin-bottom:16px;text-align:center;display:none}</style></head><body><div class="login-card"><div class="title">REVZZ <span>PANEL</span></div><div id="errDeleted" class="alert">USERNAME / PASSWORD TIDAK ADA - AKUN TELAH DIHAPUS</div><p class="label">USERNAME</p><div class="input-wrap"><input id="user" class="input" placeholder="USERNAME"></div><p class="label">PASSWORD</p><div class="input-wrap"><input id="pass" type="password" class="input" placeholder="PASSWORD"><span class="eye" onclick="let p=document.getElementById('pass');p.type=p.type==='password'?'text':'password'">👁️</span></div><button class="btn-login" onclick="login()">LOGIN</button><p class="owner-text">OWNER @RevzzPtr</p></div><script>
+function login(){
+  let u=document.getElementById('user').value.trim();
+  let p=document.getElementById('pass').value.trim();
+  let err=document.getElementById('errDeleted');
+  err.style.display='none';
+  
+  // DEWA
+  if(u==='revzz'&&p==='revzz123'){
+    localStorage.setItem('revzz_user',JSON.stringify({user:'revzz',role:'DEWA'}));
+    localStorage.setItem('revzz_login','true');
+    location.href='dashboard.html';
+    return
+  }
+  
+  // CEK APAKAH AKUN PERNAH DI DELETE - BLOCK TOTAL
+  if(localStorage.getItem('deleted_'+u)){
+    err.style.display='block';
+    return;
+  }
+
+  let users=JSON.parse(localStorage.getItem('ks_users')||'[]');
+  let f=users.find(x=>x.user===u&&x.pass===p);
+  if(f){
+    // SUKSES LOGIN
+    localStorage.setItem('revzz_user',JSON.stringify({user:f.user,role:f.role}));
+    localStorage.setItem('revzz_login','true');
+    location.href='dashboard.html'
+  }else{
+    // GAGAL - CEK APAKAH DI DELETE ATAU SALAH PASS
+    if(localStorage.getItem('deleted_'+u)){
+      err.style.display='block';
+    } else {
+      alert('USERNAME / PASSWORD TIDAK ADA')
+    }
+  }
+}
+
+// Kalo ke tendang karena dihapus
+let params=new URLSearchParams(location.search);
+if(params.get('deleted')==='1'){
+  document.getElementById('errDeleted').style.display='block';
+}
+
+// Kalo udah login langsung masuk dashboard
+if(localStorage.getItem('revzz_login')==='true'){
+  location.href='dashboard.html';
+}
+</script></body></html>

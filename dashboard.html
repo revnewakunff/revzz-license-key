@@ -1,0 +1,89 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>REVZZ - DASHBOARD</title><style>*{box-sizing:border-box;margin:0;padding:0;font-family:Arial}body{background:#080000;color:#fff;min-height:100vh}.header{display:flex;justify-content:space-between;align-items:center;padding:14px;background:#120505;border-bottom:1px solid #dc262633;position:sticky;top:0;z-index:99}.btn{width:36px;height:36px;background:#000;border:1px solid #dc262633;border-radius:8px;color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer}.side{position:fixed;top:61px;left:0;width:250px;height:calc(100% - 61px);background:#0f0404;border-right:1px solid #dc262633;padding:16px;transform:translateX(-100%);transition:.3s;z-index:98;display:flex;flex-direction:column;justify-content:space-between;overflow-y:auto}.side.show{transform:translateX(0)}.side a{display:flex;gap:10px;padding:12px;border-radius:12px;font-size:13px;font-weight:700;margin-bottom:8px;text-decoration:none;color:#fff;cursor:pointer;transition:.2s}.side a.menu{background:#000;border:1px solid #ffffff0d}.side a.active{background:#dc2626!important;border:1px solid #dc2626!important;color:#fff!important}.owner-box{padding:12px;background:#000;border-radius:12px;border:1px solid #ffffff0d;margin-top:12px}.overlay{position:fixed;top:61px;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);display:none;z-index:97}.overlay.show{display:block}.box{background:#120505;border:1px solid #dc262633;border-radius:14px;padding:16px;margin:12px}.key-card{background:#120505;border:1px solid #dc262633;border-radius:14px;padding:14px;margin:10px 12px}.badge{font-size:10px;padding:4px 8px;border-radius:20px;font-weight:900}.badge-active{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3)}.actions{display:flex;gap:8px;margin-top:10px}.btn-sm{flex:1;padding:9px;border-radius:10px;font-size:11px;font-weight:800;border:none;cursor:pointer}.btn-del{background:rgba(220,38,38,.15);color:#ef4444;border:1px solid rgba(220,38,38,.2)}.btn-reset{background:#ffffff0d;color:#fff;border:1px solid #ffffff1a}.btn-copy{background:#ffffff0d;color:#fff;border:1px solid #ffffff1a}</style></head><body><div class="header"><button class="btn" onclick="toggle()">☰</button><b style="letter-spacing:3px;font-size:14px">REVZZ <span style="color:#dc2626">PANEL</span></b><span style="font-size:11px;background:#000;border:1px solid #dc26264d;color:#ef4444;padding:4px 10px;border-radius:20px;font-weight:900" id="totalKeys">0</span></div><div id="side" class="side"><div><a href="dashboard.html" class="active">📊 DASHBOARD</a><a href="createkey.html" class="menu">➕ CREATE KEY</a><a href="adduser.html" id="menu-adduser" class="menu">👤 ADD USER</a><a href="profil.html" class="menu">⚙️ PROFIL</a><a href="#" onclick="logout();return false;" class="menu" style="margin-top:20px;color:#ef4444;background:rgba(220,38,38,.15);border:1px solid rgba(220,38,38,.25)">🚪 Logout</a></div><div class="owner-box"><p style="font-size:10px;color:#ffffff4d;letter-spacing:3px">OWNER</p><p style="font-weight:900;margin-top:4px;font-size:16px" id="ownerName">revzz</p><p style="font-size:12px;color:#ef4444;font-weight:900;margin-top:2px" id="ownerRole">DEWA</p></div></div><div id="ov" class="overlay" onclick="toggle()"></div><div><p style="font-weight:900;font-size:13px;margin:14px 16px 6px">DASHBOARD - LIST KEY ONLINE</p><div id="listKeys"><div style="text-align:center;color:#ffffff33;margin-top:50px;font-size:12px">Loading dari Firebase...</div></div></div><script>
+// ===== CONFIG FIREBASE =====
+const DB_URL = "https://revzz-license-key-default-rtdb.firebaseio.com/keys";
+
+// ===== FULL FIX AUTO-KICK REVZZ =====
+if(localStorage.getItem('revzz_login')!=='true'){location.href='index.html';}
+function checkAkunValid(){
+  let cur=JSON.parse(localStorage.getItem('revzz_user')||'{}');
+  if(cur.role==='DEWA') return;
+  let users=JSON.parse(localStorage.getItem('ks_users')||'[]');
+  let masihAda=users.find(x=>x.user===cur.user);
+  let isDeleted=localStorage.getItem('deleted_'+cur.user);
+  if(!masihAda || isDeleted){
+    localStorage.clear();
+    location.href='index.html?deleted=1';
+  }
+}
+checkAkunValid();
+setInterval(checkAkunValid,2000);
+function logout(){
+  localStorage.removeItem('revzz_login');
+  localStorage.removeItem('revzz_user');
+  location.href='index.html';
+}
+// ===== END AUTO-KICK =====
+function toggle(){document.getElementById('side').classList.toggle('show');document.getElementById('ov').classList.toggle('show')}
+
+async function loadKeys(){
+  try{
+    const r = await fetch(DB_URL+".json");
+    const data = await r.json();
+    let keys = data ? Object.values(data) : [];
+    // sort terbaru dulu
+    keys = keys.sort((a,b) => (b.created||0) - (a.created||0));
+    
+    document.getElementById('totalKeys').innerText=keys.length;
+    let c=document.getElementById('listKeys');
+    if(!keys.length){c.innerHTML='<div style="text-align:center;color:#ffffff33;margin-top:50px;font-size:12px">BELUM ADA KEY ONLINE - Bikin di CREATE KEY</div>';return}
+    let h='';
+    keys.forEach((k)=>{
+      let used=k.devicesUsed||0;let max=k.max||1;
+      let pct=Math.round((used/max)*100);
+      if(pct>100) pct=100;
+      h+=`<div class="key-card"><div style="display:flex;justify-content:space-between"><b style="font-family:monospace;color:#f87171;font-size:13px">${k.key}</b><span class="badge badge-active">ONLINE</span></div><div style="display:flex;gap:12px;margin-top:8px;font-size:11px;color:#ffffff99"><span>⏱ ${k.duration}</span><span>📱 ${used}/${max} DEVICE</span></div><div style="background:#000;height:6px;border-radius:10px;margin-top:8px"><div style="height:100%;width:${pct}%;background:#dc2626"></div></div><div class="actions"><button class="btn-sm btn-copy" onclick="copyKey('${k.key}')">COPY</button><button class="btn-sm btn-reset" onclick="resetDevice('${k.key}')">RESET</button><button class="btn-sm btn-del" onclick="deleteKey('${k.key}')">DELETE</button></div></div>`
+    });
+    c.innerHTML=h;
+  }catch(e){
+    document.getElementById('listKeys').innerHTML='<div style="text-align:center;color:#ef4444;margin-top:50px;font-size:12px">Gagal load Firebase: '+e.message+'</div>';
+  }
+}
+
+async function deleteKey(keyName){
+  if(!confirm('Hapus key '+keyName+'? Nanti ga bisa dipake di APK/Script/Link lagi!')) return;
+  try{
+    await fetch(DB_URL+"/"+keyName+".json", {method:"DELETE"});
+    alert('Key '+keyName+' dihapus dari Firebase!');
+    loadKeys();
+  }catch(e){ alert('Gagal hapus: '+e.message); }
+}
+
+async function resetDevice(keyName){
+  if(!confirm('Reset device untuk '+keyName+'? Semua device akan di logout!')) return;
+  try{
+    // ambil data dulu
+    const r = await fetch(DB_URL+"/"+keyName+".json");
+    const k = await r.json();
+    if(!k){ alert('Key tidak ditemukan!'); return; }
+    k.devicesUsed = 0;
+    k.deviceList = [];
+    k.devices = [];
+    delete k.deviceId;
+    delete k.hwid;
+    await fetch(DB_URL+"/"+keyName+".json", {
+      method:"PUT",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(k)
+    });
+    loadKeys();
+    alert('✅ Device berhasil di reset! '+keyName+' sekarang 0/'+k.max);
+  }catch(e){ alert('Gagal reset: '+e.message); }
+}
+
+function copyKey(t){navigator.clipboard.writeText(t).then(()=>{alert('Copied: '+t)});}
+let cur=JSON.parse(localStorage.getItem('revzz_user')||'{"user":"revzz","role":"DEWA"}');
+document.getElementById('ownerName').innerText=cur.user;
+document.getElementById('ownerRole').innerText=cur.role;
+if(cur.role!=='DEWA'){document.getElementById('menu-adduser').style.display='none';}
+loadKeys();
+</script></body></html>
